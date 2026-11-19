@@ -1,0 +1,9 @@
+[project]
+name = "radar_viz"
+version = "0.1.0"
+description = "简易雷达报警系统电脑端：串口数据解析与实时可视化"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

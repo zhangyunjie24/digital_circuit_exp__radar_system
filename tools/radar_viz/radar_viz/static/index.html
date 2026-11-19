@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>雷达控制台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 28 A14 14 0 0 1 30 28 Z' fill='%23142320' stroke='%233ccfcf' stroke-width='2'/%3E%3Cpath d='M16 28 L25 17' stroke='%233ccfcf' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 20" aria-hidden="true"><path d="M2 18 A14 14 0 0 1 30 18" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 18 A8 8 0 0 1 24 18" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/><path d="M16 18 L24 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <div>
+      <div class="brand-name">RADAR</div>
+      <div class="brand-sub">简易雷达报警系统 · 电脑端</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <span id="src-pick" class="src-pick">
+      <select id="src-select" aria-label="数据源"><option value="">加载中…</option></select>
+      <select id="speed-select" aria-label="回放倍速" hidden>
+        <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option>
+      </select>
+      <button id="btn-refresh" class="btn icon" title="刷新串口和录制文件列表" aria-label="刷新列表">↻</button>
+    </span>
+    <span id="src-label" class="src-label" hidden></span>
+    <button id="btn-connect" class="btn primary">连接</button>
+    <button id="btn-record" class="btn rec" hidden title="把收到的原始行存到 recordings/ 目录"><i class="rec-dot"></i><span>录制</span></button>
+    <span id="sim-tools" class="sim-tools" hidden>
+      <button id="btn-switch" class="btn" title="模拟按键：STEP ↔ CONT">切换模式</button>
+      <button id="btn-power" class="btn" title="模拟 SW7 关 1 秒再打开">断电重开</button>
+    </span>
+  </div>
+
+  <div class="pills">
+    <span class="pill" id="pill-link"><i class="dot"></i><span>未连接</span></span>
+    <span class="pill mono" id="pill-rate">0.0 行/s</span>
+    <span class="pill mono" id="pill-err">坏行 0</span>
+    <span class="pill" id="pill-intr" hidden><i class="dot"></i><span>无入侵</span></span>
+  </div>
+</header>
+
+<main class="grid">
+  <section class="card ppi-card">
+    <div class="card-head">
+      <h2>扫描图 <small id="ppi-sub">PPI · 0°–180°</small></h2>
+      <span class="bl-tools">
+        <span class="muted" id="bl-text">未记录背景</span>
+        <button class="btn small" id="btn-bl" title="把每个方向现在的距离记为背景；之后比背景近 150mm 以上就判为入侵。先保证没人在扫描范围里">记录背景</button>
+        <button class="btn small ghost" id="btn-bl-clear" hidden>清除</button>
+      </span>
+      <div class="seg" id="range-seg" role="group" aria-label="量程">
+        <button data-range="1000">1 m</button>
+        <button data-range="2000">2 m</button>
+        <button data-range="4000">4 m</button>
+      </div>
+    </div>
+    <div class="ppi-wrap">
+      <canvas id="ppi"></canvas>
+      <div class="tip" id="ppi-tip" hidden></div>
+    </div>
+    <ul class="legend" id="legend"></ul>
+  </section>
+
+  <aside class="side">
+    <section class="card now">
+      <div class="card-head"><h2>当前测量</h2><span class="chip" id="mode-chip">—</span></div>
+      <div class="now-grid">
+        <div class="metric">
+          <div class="label">角度</div>
+          <div class="value"><span id="v-angle">—</span><span class="unit">°</span></div>
+          <div class="sub" id="v-dir">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">距离</div>
+          <div class="value"><span id="v-dist">—</span><span class="unit" id="v-dist-unit">mm</span></div>
+          <div class="sub" id="v-age">—</div>
+        </div>
+      </div>
+      <div class="level">
+        <div class="level-bar" id="level-bar"></div>
+        <div class="level-text"><span class="swatch" id="level-swatch"></span><span id="level-name">无数据</span></div>
+      </div>
+      <dl class="facts">
+        <dt>接近速度</dt><dd id="v-speed" title="同一角度相邻两次测量的距离变化率；STEP 模式约 8~16 秒才回到同一角度">—</dd>
+        <dt>背景差</dt><dd id="v-intr">未记录背景</dd>
+      </dl>
+    </section>
+
+    <section class="card board">
+      <div class="card-head"><h2>声光报警 <small>板上状态</small></h2>
+        <label class="toggle"><input type="checkbox" id="sound-toggle"><span>声音</span></label>
+      </div>
+      <div class="leds" id="leds" aria-label="LD15 到 LD0"></div>
+      <div class="led-axis"><span>LD15</span><span>LD0</span></div>
+      <div class="buzzer">
+        <span class="bz-icon" id="bz-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        <span>蜂鸣器</span><span class="bz-text" id="bz-text">静音</span>
+      </div>
+    </section>
+
+    <section class="card events">
+      <div class="card-head"><h2>事件</h2><button class="btn ghost small" id="btn-clear-ev">清空</button></div>
+      <ol class="ev-list" id="ev-list"></ol>
+    </section>
+  </aside>
+
+  <div class="analysis">
+    <section class="card">
+      <div class="card-head">
+        <h2>瀑布图 <small>每行一个单程，最新在上</small></h2>
+        <span class="keys"><span class="muted">近</span><i class="grad"></i><span class="muted">远</span><i class="swatch oor-fill"></i><span class="muted">无回波</span></span>
+      </div>
+      <div class="chart-wrap" id="wf-wrap"><canvas></canvas><div class="tip" hidden></div></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>点云 <small>最近 1500 个点，越新越亮；大点 = 本单程</small></h2></div>
+      <div class="chart-wrap" id="cloud-wrap"><canvas></canvas><div class="tip" hidden></div></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <h2>各角度距离 <small>累计</small></h2>
+        <span class="keys"><i class="k-line" style="background:#6da7ec"></i><span class="muted">均值 ±σ</span><i class="k-dot k-band"></i><span class="muted">最近一次（按分级着色）</span></span>
+      </div>
+      <div class="chart-wrap" id="stats-wrap"><canvas></canvas><div class="tip" hidden></div></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>距离分布 <small id="hist-sub">累计</small></h2></div>
+      <div class="chart-wrap" id="hist-wrap"><canvas></canvas><div class="tip" hidden></div></div>
+    </section>
+  </div>
+
+  <section class="card calib-card">
+    <div class="card-head">
+      <h2>精度标定 <small>对准已知距离的目标（墙、书本），采集若干次读数</small></h2>
+      <span class="calib-actions">
+        <button class="btn small ghost" id="calib-export">导出 CSV</button>
+        <button class="btn small ghost" id="calib-clear">清空</button>
+      </span>
+    </div>
+    <div class="calib-grid">
+      <div>
+        <form id="calib-form" class="calib-form">
+          <label>真实距离 <input id="calib-true" type="number" min="20" max="4000" step="1" value="500" required> mm</label>
+          <label>角度 <input id="calib-angle" type="number" min="0" max="180" step="1" value="90" required> °</label>
+          <label>次数 <input id="calib-count" type="number" min="1" max="200" step="1" value="10" required></label>
+          <button class="btn primary" id="calib-start" type="submit">开始采集</button>
+        </form>
+        <div class="calib-progress" id="calib-progress" hidden>
+          <div class="pbar"><span id="calib-bar"></span></div>
+          <span class="mono" id="calib-ptext"></span>
+          <button type="button" class="btn small" id="calib-cancel">取消</button>
+        </div>
+        <p class="hint">STEP 模式只取该角度的读数（约 8 秒一次）；CONT 模式取该角度 ±4° 内的读数。无回波不计入。</p>
+        <div class="table-wrap">
+          <table class="meas-table calib-table">
+            <thead><tr><th class="num">真实 (mm)</th><th class="num">均值</th><th class="num">误差</th><th class="num">σ</th><th class="num">次数</th><th class="num">角度</th><th></th></tr></thead>
+            <tbody id="calib-body"></tbody>
+          </table>
+        </div>
+        <p class="calib-fit" id="calib-fit"></p>
+      </div>
+      <div>
+        <div class="keys calib-keys"><i class="k-dot" style="background:#6da7ec"></i><span class="muted">误差（mm）均值 ±σ</span><i class="k-line" style="background:var(--accent)"></i><span class="muted">拟合</span></div>
+        <div class="chart-wrap" id="calib-wrap"><canvas></canvas><div class="tip" hidden></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card table-card">
+    <div class="card-head"><h2>最近测量 <small>最新在上</small></h2><span class="muted mono" id="meas-count"></span></div>
+    <div class="table-wrap">
+      <table class="meas-table">
+        <thead><tr><th>时间</th><th class="num">角度</th><th class="num">距离 (mm)</th><th>分级</th><th>模式</th><th class="num">单程</th></tr></thead>
+        <tbody id="meas-body"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div class="conn-banner" id="conn-banner" hidden>后端未连接，正在重试…</div>
+
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

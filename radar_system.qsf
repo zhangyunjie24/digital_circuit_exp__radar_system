@@ -1,0 +1,187 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2013 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 64-Bit
+# Version 13.1.0 Build 162 10/23/2013 SJ Full Version
+# Date created = 23:01:33  September 16, 2026
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		radar_system_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "MAX II"
+set_global_assignment -name DEVICE EPM1270T144C5
+set_global_assignment -name TOP_LEVEL_ENTITY radar_system
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "23:01:33  SEPTEMBER 16, 2026"
+set_global_assignment -name LAST_QUARTUS_VERSION 13.1
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR "-1"
+set_global_assignment -name POWER_EXT_SUPPLY_VOLTAGE_TO_REGULATOR 3.3V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+# ---- 源文件 ----
+set_global_assignment -name VERILOG_FILE rtl/radar_system.v
+set_global_assignment -name VERILOG_FILE rtl/timebase.v
+set_global_assignment -name VERILOG_FILE rtl/sys_fsm.v
+set_global_assignment -name VERILOG_FILE rtl/disp_ctrl.v
+set_global_assignment -name VERILOG_FILE rtl/seg_scan.v
+set_global_assignment -name VERILOG_FILE rtl/seg_decoder.v
+set_global_assignment -name VERILOG_FILE rtl/key_debounce.v
+set_global_assignment -name VERILOG_FILE rtl/matrix_ctrl.v
+set_global_assignment -name VERILOG_FILE rtl/matrix_driver.v
+set_global_assignment -name VERILOG_FILE rtl/dir_mem.v
+set_global_assignment -name VERILOG_FILE rtl/servo_pwm.v
+set_global_assignment -name VERILOG_FILE rtl/scan_engine.v
+set_global_assignment -name VERILOG_FILE rtl/angle_bcd.v
+set_global_assignment -name VERILOG_FILE rtl/ultrasonic.v
+set_global_assignment -name VERILOG_FILE rtl/dist_band.v
+set_global_assignment -name VERILOG_FILE rtl/result_reg.v
+set_global_assignment -name VERILOG_FILE rtl/alarm_ctrl.v
+set_global_assignment -name VERILOG_FILE rtl/buzzer_ctrl.v
+set_global_assignment -name VERILOG_FILE rtl/lcd_ctrl.v
+set_global_assignment -name VERILOG_FILE rtl/report_ctrl.v
+set_global_assignment -name VERILOG_FILE rtl/uart_tx.v
+
+# ---- 未使用引脚的处理 ----
+# Quartus 默认把未使用引脚驱动成低电平（.pin 报告里显示 GND*）。
+# 本工程里 HC-SR04(94/95)、舵机(51) 的引脚还没分配，若板上已经插了这些模块，
+# Echo 往上驱动高电平而 CPLD 把该脚拉低就会对顶。改成三态输入，安全。
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+# ---- 引脚分配 ----
+# clk / 数码管 / 点阵 / LED 全部抄自 exp2~exp7 已上板验证过的 .qsf。
+set_location_assignment PIN_18 -to clk
+
+# 数码管段码（exp2/exp3/exp4：PIN_52=seg[0] … PIN_62=seg[6]，配 exp2 的段码表）
+set_location_assignment PIN_52 -to seg[0]
+set_location_assignment PIN_53 -to seg[1]
+set_location_assignment PIN_55 -to seg[2]
+set_location_assignment PIN_57 -to seg[3]
+set_location_assignment PIN_58 -to seg[4]
+set_location_assignment PIN_59 -to seg[5]
+set_location_assignment PIN_62 -to seg[6]
+# 注意：PIN_51（小数点）故意不分配，留给舵机信号
+
+# 数码管位选（exp3/exp4/exp5）
+set_location_assignment PIN_63 -to cat[0]
+set_location_assignment PIN_66 -to cat[1]
+set_location_assignment PIN_67 -to cat[2]
+set_location_assignment PIN_68 -to cat[3]
+set_location_assignment PIN_69 -to cat[4]
+set_location_assignment PIN_70 -to cat[5]
+set_location_assignment PIN_30 -to cat[6]
+set_location_assignment PIN_31 -to cat[7]
+
+# 点阵行选（exp7）
+set_location_assignment PIN_8 -to row[0]
+set_location_assignment PIN_7 -to row[1]
+set_location_assignment PIN_6 -to row[2]
+set_location_assignment PIN_5 -to row[3]
+set_location_assignment PIN_4 -to row[4]
+set_location_assignment PIN_3 -to row[5]
+set_location_assignment PIN_2 -to row[6]
+set_location_assignment PIN_1 -to row[7]
+
+# 点阵列数据（exp7）
+set_location_assignment PIN_45 -to row_color[0]
+set_location_assignment PIN_44 -to row_color[1]
+set_location_assignment PIN_43 -to row_color[2]
+set_location_assignment PIN_42 -to row_color[3]
+set_location_assignment PIN_41 -to row_color[4]
+set_location_assignment PIN_40 -to row_color[5]
+set_location_assignment PIN_39 -to row_color[6]
+set_location_assignment PIN_38 -to row_color[7]
+set_location_assignment PIN_22 -to row_color[8]
+set_location_assignment PIN_21 -to row_color[9]
+set_location_assignment PIN_16 -to row_color[10]
+set_location_assignment PIN_15 -to row_color[11]
+set_location_assignment PIN_14 -to row_color[12]
+set_location_assignment PIN_13 -to row_color[13]
+set_location_assignment PIN_12 -to row_color[14]
+set_location_assignment PIN_11 -to row_color[15]
+
+# LED（exp6）
+set_location_assignment PIN_80 -to ld[0]
+set_location_assignment PIN_79 -to ld[1]
+set_location_assignment PIN_78 -to ld[2]
+set_location_assignment PIN_77 -to ld[3]
+set_location_assignment PIN_76 -to ld[4]
+set_location_assignment PIN_75 -to ld[5]
+set_location_assignment PIN_74 -to ld[6]
+set_location_assignment PIN_73 -to ld[7]
+set_location_assignment PIN_144 -to ld[8]
+set_location_assignment PIN_143 -to ld[9]
+set_location_assignment PIN_142 -to ld[10]
+set_location_assignment PIN_141 -to ld[11]
+set_location_assignment PIN_140 -to ld[12]
+set_location_assignment PIN_139 -to ld[13]
+set_location_assignment PIN_138 -to ld[14]
+set_location_assignment PIN_137 -to ld[15]
+
+# sw7：PIN_125（用户确认）
+set_location_assignment PIN_125 -to sw7
+# btn_mode：PIN_61 = BTN0（用户确认），STEP/CONT 模式切换
+set_location_assignment PIN_61 -to btn_mode
+
+# HC-SR04 与舵机（题目给定）
+set_location_assignment PIN_94 -to trig
+set_location_assignment PIN_95 -to echo
+# PIN_51 与 DISP 的小数点共用。必须把 servo 显式分配到这里：
+# 不分配的话该脚悬空（段驱动高有效），小数点会被拉亮；
+# servo 现在恒为 0（舵机停止），正好把小数点熄掉。
+set_location_assignment PIN_51 -to servo
+
+# ---- 尚未确认引脚的信号：暂时做成虚拟引脚，不占实际管脚 ----
+# 等蜂鸣器 / 串口的引脚确认后，删掉这两行、换成 set_location_assignment。
+set_location_assignment PIN_60 -to buzzer
+# LCD12864（《MAXII数字实验板（LCM12864液晶版）》第 20 节）：
+# LCD_RD、LCD_WR、A0、RST、CS、D7~D0 依次为 32、37、48、109、108、107、106、105、104、103、102、110、101
+# 注意 D1=110、D0=101 不是连续的，手册原文如此
+set_location_assignment PIN_32 -to lcd_rd_n
+set_location_assignment PIN_37 -to lcd_wr_n
+set_location_assignment PIN_48 -to lcd_a0
+set_location_assignment PIN_109 -to lcd_rst_n
+set_location_assignment PIN_108 -to lcd_cs_n
+set_location_assignment PIN_107 -to lcd_d[7]
+set_location_assignment PIN_106 -to lcd_d[6]
+set_location_assignment PIN_105 -to lcd_d[5]
+set_location_assignment PIN_104 -to lcd_d[4]
+set_location_assignment PIN_103 -to lcd_d[3]
+set_location_assignment PIN_102 -to lcd_d[2]
+set_location_assignment PIN_110 -to lcd_d[1]
+set_location_assignment PIN_101 -to lcd_d[0]
+
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+
+# 串口发送：板上 TX1 = 引脚 85（丝印方向未确认：电脑收不到时换成 86 = RX1 再试）
+set_location_assignment PIN_85 -to uart_tx_pin

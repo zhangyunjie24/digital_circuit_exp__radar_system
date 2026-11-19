@@ -1,0 +1,43 @@
+# Quartus generated
+db/
+incremental_db/
+output_files/
+simulation/
+greybox_tmp/
+*.qws
+*.bak
+*.rpt
+*.summary
+*.smsg
+
+# ModelSim
+msim/
+work/
+transcript
+*.wlf
+*.vstf
+
+# LaTeX intermediates
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# drawio backups
+*.bkp
+
+# Kept locally only: course/board reference material, vendor packages, reports
+/ref/
+/reports/
+
+# Python
+__pycache__/
+.pytest_cache/
+tools/radar_viz/recordings/
+
+# Claude Code project notes (local only)
+CLAUDE.md
+.claude/
